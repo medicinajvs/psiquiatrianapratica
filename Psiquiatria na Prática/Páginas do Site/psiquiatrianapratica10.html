@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFTReview Extensivo</title>
+    <!-- Font Awesome para ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Tailwind CSS para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonte Inter do Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Fundo escuro */
+            color: #e2e8f0; /* Texto claro */
+        }
+        .selected-item {
+            background-color: #4299e1; /* Destaque azul */
+            border: 2px solid #63b3ed;
+        }
+        .item-thumbnail-placeholder {
+            width: 60px;
+            height: 40px;
+            background-color: #4a5568;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.375rem;
+            flex-shrink: 0;
+        }
+        .item-thumbnail-placeholder i {
+            font-size: 1.5rem;
+            color: #CBD5E0;
+        }
+        /* Oculta a barra de rolagem mas permite rolar */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Cabeçalho -->
+    <header class="bg-gray-900 p-4 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-xl font-bold text-white">Psiquiatria na Prática</h1>
+            <!-- Seletor de Módulos -->
+            <select id="moduleSelector" class="bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Opções preenchidas via JavaScript -->
+            </select>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col lg:flex-row p-4 space-y-4 lg:space-y-0 lg:space-x-4">
+        
+        <!-- Seção Principal do Player e Materiais -->
+        <section class="flex-1 bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+            
+            <!-- Player de Vídeo (iframe) -->
+            <div class="relative w-full h-0 pb-[56.25%] bg-black flex-shrink-0"> <!-- Proporção 16:9 -->
+                <iframe id="contentPlayer" src="" class="absolute inset-0 w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            
+            <!-- Título da Aula -->
+            <div class="p-4 bg-gray-800 flex-shrink-0">
+                <h2 id="itemTitle" class="text-2xl font-bold text-white text-center">Selecione uma aula para começar</h2>
+            </div>
+
+            <!-- Seção de Materiais em PDF -->
+            <div class="p-4 bg-gray-800 rounded-b-lg shadow-inner flex-grow overflow-y-auto hide-scrollbar">
+                <h3 class="text-lg font-bold mb-4 text-white">Materiais de Apoio</h3>
+                <div id="materialsContainer" class="space-y-3">
+                    <!-- Materiais contextuais injetados aqui -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Barra Lateral de Aulas -->
+        <aside class="w-full lg:w-[500px] bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col" style="max-height: calc(100vh - 100px);">
+            <h3 id="moduleTitle" class="text-lg font-bold mb-4 text-white flex-shrink-0">Aulas</h3>
+            <!-- Container das Aulas -->
+            <div id="videosContainer" class="space-y-3 overflow-y-auto hide-scrollbar flex-grow">
+                <!-- Aulas (vídeos) injetadas aqui -->
+            </div>
+        </aside>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="bg-gray-800 text-white text-center p-4 mt-12">
+        <p>&copy; 2025 Medicina JVS. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        let selectedItemId = null;
+        let currentModuleId = null;
+
+        // --- ESTRUTURA DE DADOS DO CURSO ---
+        // (Contém todos os módulos, aulas e links de materiais)
+        const modulesData = [
+            // Seção 01 - Primeiros Aspectos: Técnica
+            { 
+                id: 's01_m01', 
+                title: 'S01 M01 - Introdução', 
+                content: [
+                    // Materiais de Estudo para este Módulo (associados a todas as aulas introdutórias)
+                    (() => {
+                        const s01_m01_materials = [
+                            { title: 'A Brief Overview Of Identifying, Diagnosing And Treating Narcisistic Personality Disorder', link: 'https://drive.google.com/file/d/1Ffj3h1YjDeTf1pzCGn3SlMfJhgDHG4sJ/view?usp=sharing' },
+                            { title: 'Late-Onset Alzheimer Disease', link: 'https://drive.google.com/file/d/17o7JRlXVvpj6mqwKZs2eWPHSRvu5UpFw/view?usp=sharing' },
+                            { title: 'Dementia With Lewy Bodies - From Scientific Knowledge To Clinical Insights', link: 'https://drive.google.com/file/d/1VvqL5ukoCmKva9c3pMYRM9OKs15WKMj4/view?usp=sharing' },
+                            { title: 'Dopaminergic Basis Of Salience Dysregulation In Psychosis', link: 'https://drive.google.com/file/d/1O38eGGswdty8WdATLfDyxLdB1y74su6_/view?usp=sharing' },
+                            { title: 'Borderline Personality Disorder In The Emergency Department: Good Psychiatric Management', link: 'https://drive.google.com/file/d/1P0rCLjMl49lSCJdpmg0uTrnGbV6sXVFk/view?usp=sharing' },
+                            { title: 'Training In Good Psychiatric Management For Borderline Personality Disorder In Residency...', link: 'https://drive.google.com/file/d/1SZRuMFFnxc6zcijcsGp0lwSQncjOilpP/view?usp=sharing' },
+                            { title: 'General Psychiatric Management For Adolescents (gpm-a) With Borderline Personality Disorder', link: 'https://drive.google.com/file/d/1a7juvINRMOe94Ehrd4vmEPujsIoqlnse/view?usp=sharing' },
+                            { title: 'Approaches To Psychotherapy For Borderline Personality - Demonstrations By Four Master Clinicians', link: 'https://drive.google.com/file/d/1bq8NpmPvs8CV4DktTMR5rIc8Xz2NLWHm/view?usp=sharing' },
+                            { title: 'What Works In The Treatment Of Borderline Personality Disorder', link: 'https://drive.google.com/file/d/1f--vSS-NaWw_X6G3aGCZjV-vjCjfN5J9/view?usp=sharing' },
+                            { title: 'Impaired Oral Absorption Of Methylphenidate Following Roux-en-y Gastric Bypass', link: 'https://drive.google.com/file/d/11buyeg6V0KeqVq7r7iWFANWRgBCMVkzs/view?usp=sharing' },
+                            { title: '“Little More Than a Gut Feeling?” - Considerations When Prescribing Psychotropic Medications...', link: 'https://drive.google.com/file/d/1f8mSdvk9AF_fC21QaVFVCFC8Rvm2QVp3/view?usp=sharing' },
+                            { title: 'Medication Management After Bariatric Surgery - Providing Optimal Patient Care', link: 'https://drive.google.com/file/d/1rCC3nlr3LmQzoilFT7iHMF2e-xwasDtW/view?usp=sharing' },
+                            { title: 'Pharmacokinetic Changes Post–Bariatric Surgery - A Scoping Review', link: 'https://drive.google.com/file/d/1tTmx8S0Sx8o-Dm-Eoc0pdvLAPvMVVHVv/view?usp=sharing' },
+                            { title: 'Is There a “Metabolic-Mood Syndrome”? A Review Of The Relationship Between Obesity And Mood Disorders', link: 'https://drive.google.com/file/d/16T3lMqkGkVfmiK8HTgOXN-OEHXO7pTLg/view?usp=sharing' },
+                            { title: 'Psychotropic Drugs And Renal Failure - Translating The Evidence For Clinical Practice', link: 'https://drive.google.com/file/d/1qlHKQjBAw0RqPton_6AZWsu7bm5Odoy3/view?usp=sharing' },
+                            { title: 'Psychopharmacology And Cardiovascular Disease', link: 'https://drive.google.com/file/d/1u4YxpD3sNdZdSF7ZNLUtcDHuttfhXhVC/view?usp=sharing' },
+                            { title: 'Psychopathology Of Common Sense', link: 'https://drive.google.com/file/d/12dB8SzDGTb__stOWPkPPGYOyQmu3nHSb/view?usp=sharing' },
+                            { title: 'The Challenge Of Neuroscience - Psychiatry And Phenomenology Today', link: 'https://drive.google.com/file/d/154Bhepq-Zf6-8zVWETyQ8LFFdLP8u-_x/view?usp=sharing' },
+                            { title: 'Corporealized And Disembodied Minds a Phenomenological View Of The Body In Melancholia And Schizophrenia', link: 'https://drive.google.com/file/d/1BlocNPmC3U-86hZpcbkLYzfnFzx8zcrp/view?usp=sharing' },
+                            { title: 'Breves Reflexões a Respeito do Sofrimento (Aspecto Pático da Existência)', link: 'https://drive.google.com/file/d/1FmUzC_cVyO8TTUCzn4yjcMoGPT8KE8pQ/view?usp=sharing' },
+                            { title: 'Melancholia as a Desynchronization. Towards a Psychopathology Of Interpersonal Time', link: 'https://drive.google.com/file/d/1HhemSN70g5s7O8QF-1mtwqPDAlX0yoBP/view?usp=sharing' },
+                            { title: 'The Personality Of Melancholics (Typus Melancholicus) Seen From An Identity-theoretical Point Of View', link: 'https://drive.google.com/file/d/1J9EnXX3bqhNhoksAXz7d5MIwnNGyQqs0/view?usp=sharing' },
+                            { title: 'DSM And The Death Of Phenomenology In America - An Example Of Unintended Consequences', link: 'https://drive.google.com/file/d/1mv6q50WzRVQ1357KaEN3KDm63mzN91jH/view?usp=sharing' },
+                            { title: 'Entendendo a Solidão no Século XXI - Uma Atualização Sobre Correlatos, Fatores de Risco e Soluções Potenciais', link: 'https://drive.google.com/file/d/1NSlxobhfVfaq-4q2RO9S0RjSK2x5hnR2/view?usp=sharing' },
+                            { title: 'Social Media as An Incubator Of Personality And Behavioral Psychopathology...', link: 'https://drive.google.com/file/d/1YKvll8DTVkJe4ulmwHwwuNMLJnyapMv1/view?usp=sharing' }
+                        ];
+
+                        return [
+                            { type: 'group', video: { title: 'Aula 01 - Comece por Aqui', link: 'https://drive.google.com/file/d/1QRt2p3VwUcLzJvn2eYydWHcod4C1AUDn/view?usp=sharing' }, materials: s01_m01_materials },
+                            { type: 'group', video: { title: 'Aula 02 - Informações Importantes (Não Pule)', link: 'https://drive.google.com/file/d/17a_Qoe0gB3Q-VAH2RLwQAqQnVPNRQcgc/view?usp=sharing' }, materials: s01_m01_materials },
+                            { type: 'group', video: { title: 'Aula 03 - Bônus e Suporte', link: 'https://drive.google.com/file/d/1dIUmzb6JV-VpXoEQzRjCw1UixO20LL0T/view?usp=sharing' }, materials: s01_m01_materials }
+                        ];
+                    })()
+                ].flat()
+            },
+            { 
+                id: 's01_m02', 
+                title: 'S01 M02 - Videocast: O Manejo Inicial', 
+                content: [
+                    // Psicoses manejo do primeiro episódio
+                    (() => {
+                        const materials = [
+                            { title: 'Effect Of Delaying Treatment Of First-Episode Psychosis On Symptoms And Social Outcomes...', link: 'https://drive.google.com/file/d/1ALw_27Jmqd-hwnLp8iO4s088PNa8C3C5/view?usp=sharing' },
+                            { title: 'From Early Intervention In Psychosis To Youth Mental Health Reform...', link: 'https://drive.google.com/file/d/1l2r-Yp6R6zm5oCcl38k7bhMVpEfJbCBT/view?usp=sharing' },
+                            { title: 'Duration Of Untreated Psychosis as Predictor Of Long-Term Outcome In Schizophrenia...', link: 'https://drive.google.com/file/d/1x2_fARnUE6Xu_QHIwPSkW_iVMRuEOaNp/view?usp=sharing' },
+                            { title: 'Impact Of Duration Of Untreated Psychosis In Short-Term Response To Treatment And Outcome...', link: 'https://drive.google.com/file/d/1yUst2CyqAGhzlCc1Na1JVF4moog_a6ja/view?usp=sharing' }
+                        ];
+                        return [
+                            { type: 'group', video: { title: 'Aula 01 - Psicoses: Manejo do Primeiro Episódio: Parte I', link: 'https://drive.google.com/file/d/1CMjyRTMpRJPUg5XObHBng7EFNPPlSPSk/view?usp=sharing' }, materials: materials },
+                            { type: 'group', video: { title: 'Aula 02 - Psicoses: Manejo do Primeiro Episódio: Parte II', link: 'https://drive.google.com/file/d/1NQwp4k4g6m97t0bANxTjPGk0sq2hoIen/view?usp=sharing' }, materials: materials }
+                        ];
+                    })(),
+                    // Depressão abordagem de uma situação crítica
+                    (() => {
+                        const materials = [
+                            { title: 'Inflammation And Depression But Where Does The Inflammation Come From?', link: 'https://drive.google.com/file/d/1yqy_94BqERi3L2Q9lh_0YS14lo47cwlN/view?usp=sharing' }
+                        ];
+                        return [
+                            { type: 'group', video: { title: 'Aula 01 - Depressão: Abordagem de uma Situação Crítica - Parte I', link: 'https://drive.google.com/file/d/17SIbZT0NX4UM7su94ZtwSBbQvsV7r7ud/view?usp=sharing' }, materials: materials },
+                            { type: 'group', video: { title: 'Aula 02 - Depressão: Abordagem de uma Situação Crítica - Parte II', link: 'https://drive.google.com/file/d/1RDzmFjbo1-1uLeBLPWojhY4TiLhGnhn3/view?usp=sharing' }, materials: materials }
+                        ];
+                    })(),
+                    // Mania partindo de uma agitação no PS
+                    (() => {
+                        const materials = [
+                            { title: 'A Network Meta-Analysis On Comparative Efficacy And All-Cause Discontinuation Of Antimanic Treatments...', link: 'https://drive.google.com/file/d/13on6m89KjJuiUdj-Hs1tnMIDFmO3RoKj/view?usp=sharing' },
+                            { title: 'Optimal Duration Of Risperidone or Olanzapine Adjunctive Therapy To Mood Stabilizer Following Remission...', link: 'https://drive.google.com/file/d/1KqE233vLCaEEFKxZ6TUz0obHZIGMPYdg/view?usp=sharing' }
+                        ];
+                        return [
+                            { type: 'group', video: { title: 'Aula 01 - Mania: Partindo de uma Agitação no PS: Parte I', link: 'https://drive.google.com/file/d/1F6VhC6sGy1jJNw9CVqFrAF1sKokgkJlq/view?usp=sharing' }, materials: materials },
+                            { type: 'group', video: { title: 'Aula 02 - Mania: Partindo de uma Agitação no PS: Parte II', link: 'https://drive.google.com/file/d/1b-hBUCHNBpcdPvfZVhsCgZag7BKv3LAk/view?usp=sharing' }, materials: materials }
+                        ];
+                    })()
+                ].flat()
+            },
+            {
+                id: 's01_m03',
+                title: 'S01 M03 - Aspectos Técnicos dos Psicofármacos',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Iniciando um Antidepressivo: Parte I', link: 'https://drive.google.com/file/d/1dbqBOGWIEDxyo3dt-KPEJL2p8T4U6gwt/view?usp=sharing' }, materials: [{ title: 'Iniciando Antidepressivos - Parte I', link: 'https://drive.google.com/file/d/16AzUcw6jfe_5Qh6xO9ra2nJ70RDC2rWv/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 02 - Iniciando um Antidepressivo: Parte II', link: 'https://drive.google.com/file/d/1lDpcAeKhmVLDPi9uEy_UJ24bfNscL2MM/view?usp=sharing' }, materials: [{ title: 'Iniciando Antidepressivos - Parte II', link: 'https://drive.google.com/file/d/16NWrIQRuDZuRvgM6aSCjP91wN3QXnoGP/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 03 - Manejo dos Efeitos Colaterais dos Antidepressivos', link: 'https://drive.google.com/file/d/1oNqFREv9lz9Eh3yf7dIzK4KCWs3X4HhS/view?usp=sharing' }, materials: [{ title: 'Entendendo e Manejando os Principais Efeitos Adversos dos Antidepressivos', link: 'https://drive.google.com/file/d/1NUl6AGDisRA6A9-8JMqx6TVOfhUKKHA9/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 04 - Como Realizar a Troca de Antidepressivos?', link: 'https://drive.google.com/file/d/1WQLngMc3KM3JNm9BZuqMeArbmwHWEenT/view?usp=sharing' }, materials: [{ title: 'Trocando Antidepressivos', link: 'https://drive.google.com/file/d/1d3OsUp3TwjsXsS4jljvDcmN-cIf_kelK/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 05 - Iniciando um Antipsicótico: Parte I', link: 'https://drive.google.com/file/d/12UWPDBf3Jl5B1ezKstZBdvzyNcYvt4-x/view?usp=sharing' }, materials: [{ title: 'Introdução aos Antipsicóticos - Parte I', link: 'https://drive.google.com/file/d/1Z0ytkTbRf0zIl-jsksefKXu_dhwWN66d/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 06 - Iniciando um Antipsicótico: Parte II', link: 'https://drive.google.com/file/d/1thyunr0YIVpt7K8mxXdsJc7b6caZghLs/view?usp=sharing' }, materials: [{ title: 'Introdução aos Antipsicóticos - Parte II', link: 'https://drive.google.com/file/d/1w9brRC0o7mYPDyxd8VCmKQKut3kD9GeX/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 07 - Introdução aos Benzodiazepínicos e Drogas Z', link: 'https://drive.google.com/file/d/1jQ4NMrGXrJ1-v_kCXQowPAGhOxrIXKo0/view?usp=sharing' }, materials: [
+                        { title: 'Benzodiazepines - Risks And Benefits. A Reconsideration', link: 'https://drive.google.com/file/d/1BUqoo0ka_qX6FWK2Ta3Vdk7dChHnYRuf/view?usp=sharing' },
+                        { title: 'Benzodiazepínicos e Drogas Z', link: 'https://drive.google.com/file/d/1tnhTaqCn_RFdYBdF7tspDz9B4ELRSruE/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 08 - Como Retirar um Benzodiazepínico', link: 'https://drive.google.com/file/d/1mX4GrGkWMAYcv0diOj3s2VfcBqP5O1bQ/view?usp=sharing' }, materials: [{ title: 'Desmame de Benzodiazepínicos', link: 'https://drive.google.com/file/d/158pOqWF15pn914ScfHbKxLWnRsPtUDZ8/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 09 - Introdução aos Estabilizadores de Humor', link: 'https://drive.google.com/file/d/1bPVtoO6H5A-epjas16J_o-t-8JggvaaR/view?usp=sharing' }, materials: [{ title: 'Introdução aos Estabilizadores de Humor', link: 'https://drive.google.com/file/d/1uzoMU06I7e-zF8T96qX-gOLiktar1Ocf/view?usp=sharing' }] }
+                ]
+            },
+            // Seção 02 - Raciocínio e Manejo: Clínica
+            {
+                id: 's02_m01',
+                title: 'S02 M01 - Clínica e Manejo: Transtornos da Ansiedade',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Clínica dos Transtornos da Ansiedade na Prática: Parte I', link: 'https://drive.google.com/file/d/19YWZ404MCLOaPLz14K04dKEGmU9gavES/view?usp=sharing' }, materials: [
+                        { title: 'Clínica da Ansiedade (PDF 1)', link: 'https://drive.google.com/file/d/1Y2b2f-jmejFlS-ABfCZwY0frcrZzM61P/view?usp=sharing' },
+                        { title: 'Clínica da Ansiedade (PDF 2)', link: 'https://drive.google.com/file/d/1hCVPa30XUItQBiKVZS8GkCJZOsSv5HHw/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 02 - Clínica dos Transtornos da Ansiedade na Prática: Parte II', link: 'https://drive.google.com/file/d/1OKPknxEkhmoBOfTpKS9hAcVIAN_wZh3U/view?usp=sharing' }, materials: [{ title: 'A Lifespan View Of Anxiety Disorders', link: 'https://drive.google.com/file/d/1VDJ3WTRdlPrqFLEMymRkzWYtdslwrSlc/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 03 - Manejo do Transtorno do Pânico no Pronto-Socorro', link: 'https://drive.google.com/file/d/1ypI5oKAv4X4puwHQzZ5csA4dvljOGE6L/view?usp=sharing' }, materials: [
+                        { title: 'Tratamento Ansiedade - Transtorno do Pânico (TP) (PDF 1)', link: 'https://drive.google.com/file/d/16ubOHZti8-qmzRjVg5notlLlCYYDgOxJ/view?usp=sharing' },
+                        { title: 'Tratamento Ansiedade - Transtorno do Pânico (TP) (PDF 2)', link: 'https://drive.google.com/file/d/1NeVJ187-rtF9emFSXeD4R6ghPksRNNNs/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 04 - Manejo do Transtorno do Pânico no Ambulatório', link: 'https://drive.google.com/file/d/1RHLU4AtOEItWcVjAKMu3kPpoKN6YTuMT/view?usp=sharing' }, materials: [] }, // Sem material específico listado para esta aula
+                    { type: 'group', video: { title: 'Aula 05 - Manejo do Transtorno de Ansiedade Generalizada: Parte I', link: 'https://drive.google.com/file/d/1fo87FE4MFbUHi1PxROYk66YdIKoZiwnh/view?usp=sharing' }, materials: [
+                        { title: 'Tratamento Ansiedade - Transtorno de Ansiedade Generalizada (TAG) (PDF 1)', link: 'https://drive.google.com/file/d/1Pu4DyAGgeWcBT7om37Dr6I-ZcOc36jYI/view?usp=sharing' },
+                        { title: 'Tratamento Ansiedade - Transtorno de Ansiedade Generalizada (TAG) (PDF 2)', link: 'https://drive.google.com/file/d/1uIWLWgzRs842HZAA-tF_zl7hgqgfqm0R/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 06 - Manejo do Transtorno de Ansiedade Generalizada: Parte II', link: 'https://drive.google.com/file/d/1ZA0HC3wWl-MqHNBil_NkgSxSNmVpTRi7/view?usp=sharing' }, materials: [] } // Sem material específico
+                ]
+            },
+            {
+                id: 's02_m02',
+                title: 'S02 M02 - Clínica e Manejo: Transtorno Depressivo Maior',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Clínica da Depressão Maior na Prática: Parte I', link: 'https://drive.google.com/file/d/1K4KpAEpVZ_WcRIgtoU2ihyzsi7bSdOtC/view?usp=sharing' }, materials: [
+                        { title: 'Clínica da Depressão (PDF 1)', link: 'https://drive.google.com/file/d/1YwVpj0szFBocdJxfZ8pTIq2i175jRK4t/view?usp=sharing' },
+                        { title: 'Clínica da Depressão (PDF 2)', link: 'https://drive.google.com/file/d/1c3Hm4fzGxtF0oLjKNzHBpZtCB5ygd1wp/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 02 - Clínica da Depressão Maior na Prática: Parte II', link: 'https://drive.google.com/file/d/1eMkHFl5_LPw4WabDiRLn9J2cLtqyuZbx/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 03 - Manejo da Depressão Maior: Parte I', link: 'https://drive.google.com/file/d/12kcNj7XmH0KPPml9EcHNmbbYehsS1c8k/view?usp=sharing' }, materials: [
+                        { title: 'Manejo da Depressão (PDF 1)', link: 'https://drive.google.com/file/d/1PDEwAjYd5DDvBUx49aGniyCVC_7H5Mbg/view?usp=sharing' },
+                        { title: 'Manejo da Depressão (PDF 2)', link: 'https://drive.google.com/file/d/1SzTnLx9Ut2cFwC9J1rSNfbMQLBoY7X_Z/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 04 - Manejo da Depressão Maior: Parte II', link: 'https://drive.google.com/file/d/1uJwUz4sOOwwrQYAERP3H2luXJVwuZRXe/view?usp=sharing' }, materials: [{ title: 'CANMAT 2016 Clinical Guidelines For The Management Of Adults With Major Depressive Disorder...', link: 'https://drive.google.com/file/d/1uwmmPYmmd21g15mjtnge7g0rxgKaILd1/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 05 - Bases da Depressão em Gestantes', link: 'https://drive.google.com/file/d/1fVMCoZQRGyQizZm4gYjSVGjRSvTENr8G/view?usp=sharing' }, materials: [{ title: 'Depressão em Situações Especiais - Gestantes', link: 'https://drive.google.com/file/d/1fMYvSYn_mbNWRJgFYCOUJMoywYDTS2nx/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 06 - Bases da Depressão em Idosos', link: 'https://drive.google.com/file/d/1CE5FkywJbPdwUsDmVmb_59x4WFBWs_T9/view?usp=sharing' }, materials: [
+                        { title: 'Depression In The Elderly', link: 'https://drive.google.com/file/d/188sK8evNHVU6JN4HQZEELbKko-OJPmpV/view?usp=sharing' },
+                        { title: 'Depressão em Situações Especiais - Idosos', link: 'https://drive.google.com/file/d/1Y1wWq05Nrn6DNHYvdNalo_NSHWlQ_jCO/view?usp=sharing' }
+                    ] }
+                ]
+            },
+            {
+                id: 's02_m03',
+                title: 'S02 M03 - Clínica e Manejo: Psicoses e Mania',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Agitação Psicomotora: Identificação e Manejo Verbal', link: 'https://drive.google.com/file/d/1tJ1m4f9zjpsd8UbrK8GvBGzWbk8v05GB/view?usp=sharing' }, materials: [{ title: 'Agitação Psicomotora - Parte I', link: 'https://drive.google.com/file/d/1pwJtl6NwJ7mB6fvZPRJN5sSPNxYWvQCp/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 02 - Agitação Psicomotora: Psicofármacos no PS', link: 'https://drive.google.com/file/d/1YgO4JDghgwgkSoSVBZ2yfRNh-ySWBvS1/view?usp=sharing' }, materials: [{ title: 'Agitação Psicomotora - Parte II', link: 'https://drive.google.com/file/d/1K3Wrs4fyTEGv4feSpsC8n84tGn4CnFt1/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 03 - Agitação Psicomotora: Casos Clínicos + Contenção Física', link: 'https://drive.google.com/file/d/1ThCCQ6aVrWUt0Ii9Bdj4IUN4xa46z0pf/view?usp=sharing' }, materials: [{ title: 'Agitação Psicomotora - Parte III', link: 'https://drive.google.com/file/d/1B9RmpOeHN3Wgd6Mq1LJN7rrjQ_zfXX0a/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 04 - Clínica das Psicoses: Parte I', link: 'https://drive.google.com/file/d/1tGKjE3hIhH0BE1CisGRx0yH1_S2WpjxV/view?usp=sharing' }, materials: [{ title: 'Clínica das Psicoses - Parte I', link: 'https://drive.google.com/file/d/1vU7SMafvLEeT_KelSABcQQbOBqjPcXN-/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 05 - Clínica das Psicoses: Parte II', link: 'https://drive.google.com/file/d/1JRDzsWshJGv_epG7_WBMDv0J_Cim_tN6/view?usp=sharing' }, materials: [{ title: 'Clínica das Psicoses - Parte II', link: 'https://drive.google.com/file/d/1E5xlzksYCO6XPhVOdOhNnw8eWW3zVUif/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 06 - Manejo: Esquizofrenia', link: 'https://drive.google.com/file/d/1Kbs4Gj79swuDFUfoMo0FhH4ECP5svfgp/view?usp=sharing' }, materials: [
+                        { title: 'Pathologies Of Intersubjectivity In Autism And Schizophrenia', link: 'https://drive.google.com/file/d/15OG1GYv5wmNWfAC8j_MsskgAML4e8KHz/view?usp=sharing' },
+                        { title: 'The Early Stages Of Schizophrenia - Speculations On Pathogenesis, Pathophysiology, And Therapeutic Approaches', link: 'https://drive.google.com/file/d/1Bt3KrX0p1D-EPxT3L9sxo9ccQHWaE5tW/view?usp=sharing' },
+                        { title: 'Catching Up On Schizophrenia - Natural History And Neurobiology', link: 'https://drive.google.com/file/d/1DeXuoWROC49JAjD8e26VE9dRfHTTsEwD/view?usp=sharing' },
+                        { title: 'Tratamento da Esquizofrenia', link: 'https://drive.google.com/file/d/1F8CiRUd9JpxXEbbV4UtNl_h8F9Agu-6D/view?usp=sharing' },
+                        { title: 'Self-Disorders - Clinical And Conceptual Implications For The Diagnostic Concept Of Schizophrenia', link: 'https://drive.google.com/file/d/1GDrMuEot_KMmzeraoRkmNDyJnyXPLo1w/view?usp=sharing' },
+                        { title: 'Phenomenology Of Self-Disturbances In Schizophrenia: Some Research Findings And Directions', link: 'https://drive.google.com/file/d/1SPyy9yheDuQvHsCbTimt9ckSL--7VHu-/view?usp=sharing' },
+                        { title: 'Discussing Rümke’s “Praecox Feeling” From The Clinician’s Experience Ofschizophrenic Contact...', link: 'https://drive.google.com/file/d/1p4SJapPjJATW6dOYFQK83vbsWAxB0gZM/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 07 - Clínica da Mania', link: 'https://drive.google.com/file/d/1UAM4sU8C0xSem-dGuA895FoUOhNwreZq/view?usp=sharing' }, materials: [{ title: 'Clínica da Mania', link: 'https://drive.google.com/file/d/1rVbhYKPWKjJeDaU2v3najxQcn5XEO9pk/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 08 - Manejo do TAB: Fases Agudas', link: 'https://drive.google.com/file/d/1RTEIacFFuGPq1zPmeEXGOGcdaFbDBskj/view?usp=sharing' }, materials: [{ title: 'Transtorno Afetivo Bipolar', link: 'https://drive.google.com/file/d/14H1J_oW3h6pBKhem7Dt_RYXZq3Sqf2JJ/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 09 - Manejo do TAB: Fase de Manutenção', link: 'https://drive.google.com/file/d/1Hk4qts1XQ0aVn1jsse0Px3gCukuD_K5L/view?usp=sharing' }, materials: [
+                        { title: 'Beyond Evidence‐Based Treatment Of Bipolar Disorder - Rational Pragmatic Approaches To Management', link: 'https://drive.google.com/file/d/11n1e5Ffc2447kw062gRqzTKlNVGtTnfs/view?usp=sharing' },
+                        { title: '20-Years Trends In The Pharmacologic Treatment Of Bipolar Disorder By Psychiatrists In Outpatient Care Settings', link: 'https://drive.google.com/file/d/1I0oxeX36oVo-TGNeYgJ5Tb3DFovHVobs/view?usp=sharing' },
+                        { title: 'Bipolar Disorders', link: 'https://drive.google.com/file/d/1P5hMot6GIOC-oPfProUTxW0KODL_sSMX/view?usp=sharing' },
+                        { title: 'Bipolar Disorder', link: 'https://drive.google.com/file/d/1S20qLoH5meKsYz6g1jh0qWMQtGmRMNox/view?usp=sharing' },
+                        { title: 'Transtorno Afetivo Bipolar - Manutenção e Situações Especiais (PDF 1)', link: 'https://drive.google.com/file/d/1SDnC_YoM8vF0w7DCBAbFAHXaPCG4XvET/view?usp=sharing' },
+                        { title: 'Clozapine In Bipolar Disorder - A Systematic Review And Meta-Analysis', link: 'https://drive.google.com/file/d/1Vi7TVdUjfcCZAJOR4rloRpDGNQhVt0-8/view?usp=sharing' },
+                        { title: 'Transtorno Afetivo Bipolar - Manutenção e Situações Especiais (PDF 2)', link: 'https://drive.google.com/file/d/1i333nSsmiwa9hbyR4DmT51VQfSi-f8ME/view?usp=sharing' },
+                        { title: 'The 2020 Royal Australian And New Zealand College Of Psychiatrists Clinical Practice Guidelines For Mood Disorders', link: 'https://drive.google.com/file/d/1wE9hA0MUNdJdnhe6_RfP8SKlESB8oBxT/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 10 - TAB e Gestação', link: 'https://drive.google.com/file/d/1W21Sua7Nv4LN1vFRwx_o2nZOMPLt2L4T/view?usp=sharing' }, materials: [] } // Sem material
+                ]
+            },
+            {
+                id: 's02_m04',
+                title: 'S02 M04 - Clínica e Manejo: Bônus',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Transtorno do Déficit de Atenção e Hiperatividade', link: 'https://drive.google.com/file/d/1snsoLhckCx5dJ0C7zBpY15C2Ojmws0QO/view?usp=sharing' }, materials: [{ title: 'TDAH - Adulto', link: 'https://drive.google.com/file/d/1_Y_wPy46NIZthAu40fLd-pSpUGxMVCHr/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 02 - Insônia', link: 'https://drive.google.com/file/d/1YU5gIfY6ldNLoJg9kfsFJ2zacArnsRJS/view?usp=sharing' }, materials: [{ title: 'Insônia na Prática', link: 'https://drive.google.com/file/d/1lp1tlvQ-xqJdV5cKuZEe1X8fVpO7lgvn/view?usp=sharing' }] }
+                ]
+            },
+            // Seção 03 - Fármacos na Prática: Acurácia
+            {
+                id: 's03_m01',
+                title: 'S03 M01 - Fármacos na Prática: Antidepressivos',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Clomipramina', link: 'https://drive.google.com/file/d/1UUd3RiN0qhtki-21W0NEN7TYXW04vRGp/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Clomipramina (PDF 1)', link: 'https://drive.google.com/file/d/1UdTwZl_MqKdiSJOZ5fT76S6cYz_wtAyu/view?usp=sharing' },
+                        { title: 'Vinheta - Clomipramina (PDF 2)', link: 'https://drive.google.com/file/d/1tBvvs79ZyWxj9b2HJyK5MlLOBPBtz7Px/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 02 - Clomipramina: Caso Clínico', link: 'https://drive.google.com/file/d/1mxo7buobmVXtquFvtSglk6wXdTXEo-Ks/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 03 - Desvenlafaxina', link: 'https://drive.google.com/file/d/1DVkgKuaUl22CECD6d8W4C6FOZlFQ4D93/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Desvenlafaxina (PDF 1)', link: 'https://drive.google.com/file/d/1OBh7VQTJ30zcbGrnknFNcIPJ3o_7-xz0/view?usp=sharing' },
+                        { title: 'Vinheta - Desvenlafaxina (PDF 2)', link: 'https://drive.google.com/file/d/1TlOUvfysz9lfp4LU7lLqv7Qov2qbBuKg/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 04 - Desvenlafaxina: Caso Clínico', link: 'https://drive.google.com/file/d/1KNfxnxLOchtfowWQ_-W-DvrzSCKoNxMQ/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 05 - Bupropiona', link: 'https://drive.google.com/file/d/1taLsSZy6HHFaZ6hxrZqFfIpHRG_fjrte/view?usp=sharing' }, materials: [{ title: 'Vinheta - Bupropiona', link: 'https://drive.google.com/file/d/1Ad7XQOCQXuvvsoaEvrT87ajSbT1HB4jg/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 06 - Paroxetina', link: 'https://drive.google.com/file/d/18J5FzZO1_cwUZTGJxd4CCAfJSfdpjC19/view?usp=sharing' }, materials: [{ title: 'Vinheta - Paroxetina', link: 'https://drive.google.com/file/d/1aK7uaq_QmyeWJrqnxe8Ag0D_HSR9lRTG/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 07 - Paroxetina: Caso Clínico', link: 'https://drive.google.com/file/d/1T0bErKepq8P5n_cZTLbEjbae6N15lUOB/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 08 - Fluvoxamina', link: 'https://drive.google.com/file/d/1jMU6GLcZ8dB4IJMkujvjVhH3D3SOYW_J/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Fluvoxamina (PDF 1)', link: 'https://drive.google.com/file/d/1MFKatXP8QwMpFb1uDElakoBZ23QbxUEY/view?usp=sharing' },
+                        { title: 'Vinheta - Fluvoxamina (PDF 2)', link: 'https://drive.google.com/file/d/1eLv1sphSpfBXTN985oHV7l7Qocj3sWo1/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 09 - Fluvoxamina: Caso Clínico', link: 'https://drive.google.com/file/d/1TcDNELJrculP8gatB7FzaRiVMaHRsXFX/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 10 - Sertralina', link: 'https://drive.google.com/file/d/1obAgGjyXagASCrgjGLcoaBY-tmnYlqad/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Sertralina (PDF 1)', link: 'https://drive.google.com/file/d/1bf66EGHrcCPov8vsMIGsI-3QjPxroHDO/view?usp=sharing' },
+                        { title: 'Vinheta - Sertralina (PDF 2)', link: 'https://drive.google.com/file/d/1e0COG8ozSIkF2vyU5bJNdr46FaZJPXTg/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 11 - Sertralina: Caso Clínico', link: 'https://drive.google.com/file/d/1Q8vEV9OzXe-9xVhGGdKP0aRdZWOjZR5m/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 12 - Escitalopram', link: 'https://drive.google.com/file/d/18kr6Yo1PNSEvx2NiYbukvhHDa2x-HV6q/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Escitalopram (PDF 1)', link: 'https://drive.google.com/file/d/1bq_onPY5XaC9uqMOHUyFufmVEsbgk-dn/view?usp=sharing' },
+                        { title: 'Vinheta - Escitalopram (PDF 2)', link: 'https://drive.google.com/file/d/1uq5QLRLQ09e4lW-loFOA0JjfW2zFbQhC/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 13 - Escitalopram: Caso Clínico', link: 'https://drive.google.com/file/d/1yRHUQXHVDBh0iqQW2lEjgNjHLXwhnJms/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 14 - Duloxetina', link: 'https://drive.google.com/file/d/1ottpCLcimvp29dDiV1BF60vXfPCcXY8m/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Duloxetina (PDF 1)', link: 'https://drive.google.com/file/d/11M9HdoH1rSeNaqZX5z4PJW4e6jhDaV5e/view?usp=sharing' },
+                        { title: 'Vinheta - Duloxetina (PDF 2)', link: 'https://drive.google.com/file/d/1ssU6ZiVQqJrzWJ8cwt2AFZ9GjD7jcVab/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 15 - Duloxetina: Caso Clínico', link: 'https://drive.google.com/file/d/1N2W2lgmebMqIQyRSTh9qsgsi3rZO8GOn/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 16 - Mirtazapina', link: 'https://drive.google.com/file/d/1wLn9OBOkDOvu9J-ItLhJpqIaUAjs6SsX/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Mirtazapina (PDF 1)', link: 'https://drive.google.com/file/d/1Wpw9YDbwVs3ASxiGKUhiLJMxVnI0RmPq/view?usp=sharing' },
+                        { title: 'Vinheta - Mirtazapina (PDF 2)', link: 'https://drive.google.com/file/d/1xms2l-zH4vpbvInLI3jJIiIi8M_QCXq7/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 17 - Mirtazapina: Caso Clínico', link: 'https://drive.google.com/file/d/1Rvy3IU2NlFTaNcRc7lP7x2iDCYxQY5Vm/view?usp=sharing' }, materials: [] }, // Sem material
+                    { type: 'group', video: { title: 'Aula 18 - Fluoxetina', link: 'https://drive.google.com/file/d/1DTg5BQ7NEK-zMlntR3MTtjlOGPo5SxZP/view?usp=sharing' }, materials: [{ title: 'Vinheta - Fluoxetina', link: 'https://drive.google.com/file/d/1WgFUQJjiHYpQKLpD92JdNGY0Fb9XKcH7/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 19 - Amitriptilina', link: 'https://drive.google.com/file/d/16aRJS-6xtEil0NmyewQfM-nT5JJSUYeX/view?usp=sharing' }, materials: [{ title: 'Vinheta - Amitriptilina', link: 'https://drive.google.com/file/d/1LX1wDD0H7CfoXGftkem8vTpb2vghzUmy/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 20 - Venlafaxina', link: 'https://drive.google.com/file/d/1j8GmjWzc0YeEP-3J8JuWSMgxLl8HQ74E/view?usp=sharing' }, materials: [{ title: 'Vinheta - Venlafaxina', link: 'https://drive.google.com/file/d/1YqAlbd2r7v2xNKJat0m8ZlmxE7-dzpe9/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 21 - Nortriptilina', link: 'https://drive.google.com/file/d/1XL-OgZo6LHH8Rjowijww0rOLRpfLz4bj/view?usp=sharing' }, materials: [{ title: 'Vinheta - Nortriptilina', link: 'https://drive.google.com/file/d/1YFtQgd0kN3knlGOu5nIXxmDMtOpl4qw3/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 22 - Vortioxetina', link: 'https://drive.google.com/file/d/1YLovhIEAerjFTpZLWJndvq9pH3davHiM/view?usp=sharing' }, materials: [{ title: 'Vinheta - Vortioxetina', link: 'https://drive.google.com/file/d/14w2Xia2CwDmHjIJHjGJ-Kg7Pk0qw1Y12/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 23 - Agomelatina', link: 'https://drive.google.com/file/d/1bFnNIkpzFoiRw_9HNMe60UuVTOrFRVFU/view?usp=sharing' }, materials: [{ title: 'Vinheta - Agomelatina', link: 'https://drive.google.com/file/d/1Ymu_M6EyRe6ZZuLz-7D6wHFycYDL6OgJ/view?usp=sharing' }] },
+                    // Materiais Adicionais (associados à última aula para referência)
+                    { type: 'group', video: { title: 'Materiais Adicionais sobre Antidepressivos', link: '' }, materials: [
+                        { title: 'Association Of Hyponatraemia And Antidepressant Drugs...', link: 'https://drive.google.com/file/d/10T1fxfLzX71M7NcCYlDYHk660YTzWw-s/view?usp=sharing' },
+                        { title: 'Bleeding Complications In The Course Of Treatment With Antidepressants...', link: 'https://drive.google.com/file/d/19c1QiU8wDLh8SOc1Mo5ZIQzUlN7jadJe/view?usp=sharing' },
+                        { title: 'Analysis Of The Frequency And Onset Time Of Hyponatremia...', link: 'https://drive.google.com/file/d/1B6NQ6UjrgacUXkKYQVm2-ZvUhgSe3IO6/view?usp=sharing' },
+                        { title: 'Antidepressants And The Risk Of Hyponatremia - A Class-by-class Review...', link: 'https://drive.google.com/file/d/1Sq2FnE3fAB-YYa0wgl_LlFhuNPNOmwqN/view?usp=sharing' },
+                        { title: 'Varfarina - Perfil Farmacológico e Interações Medicamentosas Com Antidepressivos', link: 'https://drive.google.com/file/d/1XUdGLgbp1UDZaHNduPk5FeT1_7Ea0SDx/view?usp=sharing' }
+                    ] }
+                ]
+            },
+            {
+                id: 's03_m02',
+                title: 'S03 M02 - Fármacos na Prática: Antipsicóticos',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Risperidona', link: 'https://drive.google.com/file/d/19ulu7o-ZbR9HWc8b9tFcpa9PKkx5RYy6/view?usp=sharing' }, materials: [{ title: 'Vinheta - Risperidona', link: 'https://drive.google.com/file/d/1ybn_j6EYGL-riUfiqH5fPxHZKWPHBZYr/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 02 - Quetiapina', link: 'https://drive.google.com/file/d/1WoYw2Fs4iZcYtDnPnG1vELRGZirN1F5f/view?usp=sharing' }, materials: [{ title: 'Vinheta - Quetiapina', link: 'https://drive.google.com/file/d/16CnIkin-i8DWM_LSttSjzG6ySuqO9AEV/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 03 - Olanzapina', link: 'https://drive.google.com/file/d/1gp7vctS2CJWRy3cNc73uEGtuwqaSlXaZ/view?usp=sharing' }, materials: [{ title: 'Vinheta - Olanzapina', link: 'https://drive.google.com/file/d/1g1nUs4KbFnxj2ZEGoBtFGh7HtmX4e2M4/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 04 - Haloperidol', link: 'https://drive.google.com/file/d/1KLLJPV7YiU6gF9SaVsYOnSB5raFH5bLO/view?usp=sharing' }, materials: [{ title: 'Vinheta - Haloperidol', link: 'https://drive.google.com/file/d/1AdCBJrnzc0xup9fqTYgPZ1x07BFAQ-xx/view?usp=sharing' }] },
+                    // Material Adicional
+                    { type: 'group', video: { title: 'Material Adicional sobre Antipsicóticos', link: '' }, materials: [
+                        { title: 'Dose Equivalents For Antipsychotic Drugs - The DDD Method', link: 'https://drive.google.com/file/d/1sYybYNCxtYE1eFzIMbLt6dHK-4KaeIPE/view?usp=sharing' }
+                    ] }
+                ]
+            },
+            {
+                id: 's03_m03',
+                title: 'S03 M03 - Fármacos na Prática: Estabilizadores de Humor',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Valproato', link: 'https://drive.google.com/file/d/1tPsBbxs5uuFarK-yc9RtOWv3xT_2FhzY/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Ácido Valproico', link: 'https://drive.google.com/file/d/10gxexskEF52SYR_7zg_unpduF_NjTgSC/view?usp=sharing' },
+                        { title: 'Weight Changes Associated With Antiepileptic Mood Stabilizers...', link: 'https://drive.google.com/file/d/1vp8cSjN4QFXdf2CUmArHP47u_vM-oZVW/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 02 - Lítio', link: 'https://drive.google.com/file/d/1U4pfCuAMEheuQLyHfIQJmy0KID6WZM_n/view?usp=sharing' }, materials: [
+                        { title: 'Vinheta - Lítio', link: 'https://drive.google.com/file/d/1Bb7z-BCs7S_J9Z8vdM-Y-An-yiFLQXqo/view?usp=sharing' },
+                        { title: 'Lithium Toxicity With Prolonged Neurologic Sequelae Following Sleeve Gastrectomy...', link: 'https://drive.google.com/file/d/1V8bt5_q05A74wW1relUIf_oqFM0GuWiX/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 03 - Lítio: Caso Clínico', link: 'https://drive.google.com/file/d/1zmSEC3kzjvjE2aZ06KPJsvTHQLBNP4Qt/view?usp=sharing' }, materials: [{ title: 'Lítio - Caso Clínico', link: 'https://drive.google.com/file/d/14an7uGLMefH73wCiIH9XXZ27E8z-7qmy/view?usp=sharing' }] },
+                    { type: 'group', video: { title: 'Aula 04 - Lamotrigina', link: 'https://drive.google.com/file/d/1KLjAhUk3KvtvMlUj6pu_QlcPO8U65Syr/view?usp=sharing' }, materials: [{ title: 'Vinheta - Lamotrigina', link: 'https://drive.google.com/file/d/1c-n4TVcnPLtUhP_2NqZMY0A2IZnFnOT9/view?usp=sharing' }] }
+                ]
+            },
+            // Seção 04 - Ambulatório Digital: Prática
+            {
+                id: 's04',
+                title: 'S04 - Ambulatório Digital: Prática',
+                content: [
+                    { type: 'group', video: { title: 'Aula 01 - Anamnese em Psiquiatria', link: 'https://drive.google.com/file/d/17X-ebEh7IDjj37uCCvg-d4-E1IJa0UUP/view?usp=sharing' }, materials: [
+                        { title: 'Bedside Approach To The Mental Status Assessment', link: 'https://drive.google.com/file/d/18oAMkRSJeVVLW95DXAoHC3alhsTioZpL/view?usp=sharing' },
+                        { title: 'Modelo Anamnese - Psiquiatria Prática', link: 'https://drive.google.com/file/d/1LYV5VnM1Pob8hGqeWuIDcw761PKBABA_/view?usp=sharing' },
+                        { title: 'Assessing Patients Capacities To Consent To Treatment', link: 'https://drive.google.com/file/d/1ydQeF1WzChIHnvR7mGTXUMuwRwBlGH4H/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 02 - Segundo Ambulatório Digital', link: 'https://drive.google.com/file/d/1IFOpM3rqXDj82DPOtRz-ulYTo6sscwvl/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 03 - Terceiro Ambulatório Digital: Caso - Amnésia Dissociativa', link: 'https://drive.google.com/file/d/1TOojZ_MBoE6q2oF1G_EMCzgQ2p3h5sN7/view?usp=sharing' }, materials: [
+                        { title: 'Dramaticity as Essence - Structural-Phenomenological Analysis Of Hysteria...', link: 'https://drive.google.com/file/d/1dNEVK4DaREfuME2vQIv9h3dQlZHFtJlg/view?usp=sharing' }
+                    ] },
+                    { type: 'group', video: { title: 'Aula 04 - Quarto Ambulatório Digital', link: 'https://drive.google.com/file/d/17hVN76tXTP_v9X4ky-HdAfL5Uq2Qv3pl/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 05 - Quinto Ambulatório Digital', link: 'https://drive.google.com/file/d/1Pe_yxO41pU8XpQO58NMv3OA2DTa34VIi/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 06 - Sexto Ambulatório Digital', link: 'https://drive.google.com/file/d/1gSkl0EAiRO8xrf3IuFNK61k02OvBZUfX/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 07 - Sétimo Ambulatório Digital', link: 'https://drive.google.com/file/d/1SgWm_jZJWPLf9NgEiz4YmG7bUxxKqkfE/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 08 - Oitavo Ambulatório Digital', link: 'https://drive.google.com/file/d/1in68ecPauQldP8ub10-YWWxBEms6yYmA/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 09 - Laboratório I', link: 'https://drive.google.com/file/d/11_9e-dmjPPoVH7PKQW3DXdFVMHwA_8-H/view?usp=sharing' }, materials: [] },
+                    { type: 'group', video: { title: 'Aula 10 - Nono Ambulatório Digital', link: 'https://drive.google.com/file/d/1BxlDQ6rVCvmrdLW0x2Is70k72YeahIKW/view?usp=sharing' }, materials: [] }
+                ]
+            }
+        ];
+
+        // Carrega um item (vídeo ou PDF) no player
+        function loadItem(itemLink, itemTitle) {
+            if (!itemLink || itemLink === '#') return;
+
+            const contentPlayer = document.getElementById('contentPlayer');
+            const titleElement = document.getElementById('itemTitle');
+            if (!contentPlayer || !titleElement) return;
+
+            // Converte o link do Google Drive para o modo de visualização embutida
+            const previewUrl = itemLink.replace('/view?usp=sharing', '/preview').replace('/view?usp=drive_link', '/preview');
+            contentPlayer.src = previewUrl;
+            titleElement.textContent = itemTitle;
+
+            // Gerencia o destaque do item selecionado
+            if (selectedItemId) {
+                const prevSelected = document.querySelector(`[data-id="${selectedItemId}"]`);
+                if (prevSelected) prevSelected.classList.remove('selected-item');
+            }
+            const currentSelected = document.querySelector(`[data-id="${itemLink}"]`);
+            if (currentSelected) currentSelected.classList.add('selected-item');
+            
+            selectedItemId = itemLink;
+            // Renderiza os materiais associados ao vídeo selecionado
+            renderAssociatedMaterials(itemLink);
+        }
+        // Torna a função acessível globalmente para ser usada no HTML 'onclick'
+        window.loadItem = loadItem;
+
+        // Renderiza os materiais de apoio associados a um vídeo
+        function renderAssociatedMaterials(videoLink) {
+            const materialsContainer = document.getElementById('materialsContainer');
+            materialsContainer.innerHTML = ''; // Limpa os materiais anteriores
+
+            const module = modulesData.find(m => m.id === currentModuleId);
+            if (!module) return;
+
+            // Encontra o grupo (aula) que corresponde ao link do vídeo
+            const selectedGroup = module.content.find(item => item.type === 'group' && item.video.link === videoLink);
+            
+            // Se o grupo for encontrado e tiver materiais, exibe-os
+            if (selectedGroup && selectedGroup.materials) {
+                materialsContainer.innerHTML = selectedGroup.materials.map(material => `
+                    <div class="flex items-center space-x-3 bg-gray-600 rounded-md p-2 hover:bg-gray-500 cursor-pointer transition-colors"
+                         onclick="loadItem('${material.link}', '${material.title.replace(/'/g, "\\'")}')" data-id="${material.link}">
+                        <div class="item-thumbnail-placeholder"><i class="fas fa-file-alt"></i></div>
+                        <div><p class="text-sm font-semibold text-white">${material.title}</p></div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Função para ordenar as aulas numericamente (baseado em "Aula XX")
+        function sortVideos(videos) {
+            const extractNumber = (title) => {
+                let match = title.match(/Aula (\d+)/);
+                if (match) return parseInt(match[1], 10);
+                return Infinity; // Joga itens sem número para o final
+            };
+            videos.sort((a, b) => extractNumber(a.title) - extractNumber(b.title));
+        }
+
+        // Renderiza o conteúdo do módulo selecionado
+        function renderModuleContent(moduleId) {
+            currentModuleId = moduleId;
+            const videosContainer = document.getElementById('videosContainer');
+            const materialsContainer = document.getElementById('materialsContainer');
+            const moduleTitleElement = document.getElementById('moduleTitle');
+            if (!videosContainer || !materialsContainer || !moduleTitleElement) return;
+
+            const module = modulesData.find(m => m.id === moduleId);
+            if (!module) return;
+
+            moduleTitleElement.textContent = `Aulas - ${module.title}`;
+            
+            // Filtra e ordena os vídeos
+            const videos = module.content.filter(item => item.type === 'video' || item.type === 'group').map(item => item.type === 'video' ? item : item.video);
+            sortVideos(videos);
+
+            // Exibe a lista de vídeos na barra lateral
+            videosContainer.innerHTML = videos.map(video => `
+                <div class="flex items-center space-x-3 bg-gray-700 rounded-md p-2 hover:bg-gray-600 cursor-pointer transition-colors"
+                     onclick="loadItem('${video.link}', '${video.title.replace(/'/g, "\\'")}')" data-id="${video.link}">
+                    <div class="item-thumbnail-placeholder"><i class="fas fa-play-circle"></i></div>
+                    <div><p class="text-sm font-semibold text-white">${video.title}</p></div>
+                </div>
+            `).join('');
+            
+            // Limpa materiais e carrega o primeiro vídeo do módulo automaticamente
+            materialsContainer.innerHTML = '<p class="text-gray-400">Selecione uma aula para ver os materiais.</p>';
+            const firstVideo = videos.length > 0 ? videos[0] : null;
+            if (firstVideo) {
+                loadItem(firstVideo.link, firstVideo.title);
+            } else {
+                // Caso o módulo não tenha vídeos (mas talvez tenha PDFs soltos)
+                const firstMaterial = module.content.find(item => item.type === 'pdf');
+                if (firstMaterial) {
+                    loadItem(firstMaterial.link, firstMaterial.title);
+                } else {
+                    loadItem('', 'Nenhum item neste módulo', '');
+                }
+            }
+        }
+
+        // Inicializa a aplicação
+        function initializeApp() {
+            const moduleSelector = document.getElementById('moduleSelector');
+            if (!moduleSelector) return;
+            
+            // Preenche o <select> com os módulos
+            moduleSelector.innerHTML = modulesData.map(module =>
+                `<option value="${module.id}">${module.title}</option>`
+            ).join('');
+
+            moduleSelector.addEventListener('change', (event) => {
+                renderModuleContent(event.target.value);
+            });
+
+            // Carrega o primeiro módulo na inicialização
+            if (modulesData.length > 0) {
+                moduleSelector.value = modulesData[9].id; // Define a primeira opção como selecionada
+                renderModuleContent(modulesData[9].id); // Renderiza o primeiro módulo
+            }
+        }
+
+        // Inicia o app quando a página carregar
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>

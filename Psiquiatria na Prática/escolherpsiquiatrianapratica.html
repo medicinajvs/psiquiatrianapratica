@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extensivo Residência Médica - Estratégia MED</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            /* Ajusta padding para a barra de filtros fixa */
+            padding-top: 9rem; /* Mantém o padding ajustado */
+            font-family: 'Inter', sans-serif;
+        }
+        .fixed-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .course-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .icon-heart { cursor: pointer; transition: color 0.2s ease; }
+        .icon-heart:hover { color: #ef4444; }
+        .icon-heart.favorited { color: #ef4444; font-weight: bold; }
+        .card-content { display: flex; flex-direction: column; flex-grow: 1; }
+        .card-title { flex-grow: 1; margin-bottom: 0.5rem; }
+        /* Remove estilos .nav-link e .nav-link.active que não são mais necessários */
+
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <div class="fixed-nav p-4 border-b border-gray-200">
+        <div class="container mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xl font-semibold text-gray-700">Psiquiatria na Prática</span>
+                <button class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-150 ease-in-out">
+                    <i class="fa-solid fa-heart"></i>
+                    <span>Favoritos</span>
+                    <span class="bg-white text-red-500 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-1">0</span>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap md:flex-nowrap items-center gap-4">
+
+                <div class="relative w-full md:w-auto">
+                    <select id="curso-principal-select" onchange="navigateToPage()" class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700">
+                        <option value="site_cursos_catalogo.html" selected>Extensivo Estratégia MED</option>
+                        <option value="medcurso.html">Medcurso</option>
+                        <option value="med.html">MED</option>
+                        <option value="r_clinica.html">R+ Clínica Médica</option>
+                        <option value="r_cirurgia.html">R+ Cirurgia</option>
+                        <option value="r_go.html">R+ Ginecologia e Obstetrícia</option>
+                        <option value="r_pediatria.html">R+ Pediatria</option>
+                        <option value="liberdade.html">Liberdade Médica</option>
+                        <option value="simm.html">SIMM</option>
+                        <option value="afya.html">Afya</option>
+                        <option value="manole.html">Manole</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+
+                <div class="relative w-full md:w-auto">
+                    <select class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700">
+                        <option>Filtro de especialidades</option>
+                        <option>Cardiologia</option>
+                        <option>Cirurgia Geral</option>
+                        <option>Dermatologia</option>
+                        <option>Pediatria</option>
+                        </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+
+                <div class="relative flex-grow w-full md:w-auto">
+                    <input type="text" placeholder="Buscar em Extensivo Estratégia MED..." class="block w-full bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pl-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-2">
+                     <button class="text-gray-500 hover:text-blue-600 p-2 rounded-md border border-gray-300 bg-white"><i class="fa-solid fa-grip"></i></button>
+                    <button class="text-gray-400 hover:text-blue-600 p-2 rounded-md border border-gray-300 bg-white"><i class="fa-solid fa-list"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4">
+        <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-gray-800">Psiquiatria na Prática</h2>
+            <p class="text-gray-600">Encontrados 11 cursos para você nesta categoria</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Introdução</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica01.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Videocast - O Manejo Inicial</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica02.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Aspectos Técnicos dos Psicofármacos</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica03.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Clínica e Manejo - Transtornos da Ansiedade</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica04.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Clínica e Manejo - Transtorno Depressivo Maior</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica05.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Clínica e Manejo - Psicoses e Mania</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica06.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Clínica e Manejo - Bônus</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica07.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Fármacos na Prática - Antidepressivos</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica08.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Fármacos na Prática - Antipsicóticos</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica09.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Fármacos na Prática - Estabilizadores de Humor</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica10.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+            <div class="course-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <div class="p-4 card-content">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded">2024</span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                             <i class="fa-regular fa-clock"></i>
+                             <i class="fa-regular fa-heart icon-heart" onclick="toggleFavorite(this)"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-semibold text-gray-800 card-title">Ambulatório Digital - Prática</h3>
+                    <p class="text-sm text-gray-600 mb-3"><i class="fa-solid fa-user-group mr-1"></i> 2 Professores</p>
+                    <a href="Páginas do Site/psiquiatrianapratica11.html" class="mt-auto text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">Ver Curso</a>
+                </div>
+            </div>
+
+        
+    </footer>
+
+    <script>
+        // Função para navegar para a página selecionada no dropdown principal
+        function navigateToPage() {
+            const selectElement = document.getElementById('curso-principal-select');
+            const selectedValue = selectElement.value;
+            if (selectedValue) {
+                // Redireciona o navegador para o arquivo HTML selecionado
+                window.location.href = selectedValue;
+            }
+        }
+
+        // Função para favoritar (mantida)
+        function toggleFavorite(iconElement) {
+            iconElement.classList.toggle('fa-regular');
+            iconElement.classList.toggle('fa-solid');
+            iconElement.classList.toggle('favorited');
+            updateFavoriteCount();
+        }
+
+        // Função para atualizar contador de favoritos (mantida)
+        function updateFavoriteCount() {
+            const favoritedIcons = document.querySelectorAll('.icon-heart.favorited');
+            const countSpan = document.querySelector('.fixed-nav button span:last-child');
+            if (countSpan) { countSpan.textContent = favoritedIcons.length; }
+        }
+
+        // Inicializa contador ao carregar a página (mantida)
+        document.addEventListener('DOMContentLoaded', updateFavoriteCount);
+    </script>
+
+</body>
+</html>
